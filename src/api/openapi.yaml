@@ -1,0 +1,411 @@
+openapi: 3.0.0
+info:
+  title: Service-template
+  description: Template service for quick integration
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Users
+    description: Operation with users
+
+paths:
+  /v1/users:
+    get:
+      tags:
+        - Users
+      summary: List users
+      description: List users
+      parameters:
+        - name: page
+          in: query
+          description: page number
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Количество элементов на странице
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+    post:
+      tags:
+        - Users
+      summary: Create new user
+      description: Create new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by id
+      description: Get user by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User id
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags:
+        - Users
+      summary: Update user
+      description: Update user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User id
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags:
+        - Users
+      summary: Delete user
+      description: User deleted
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: User id
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Success
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # Версия v2 с улучшенным API
+  /v2/users:
+    get:
+      tags:
+        - Users
+      summary: Get users
+      description: Get users
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Page count
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: email
+          in: query
+          description: Email filter
+          required: false
+          schema:
+            type: string
+        - name: active
+          in: query
+          description: Active filter
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersListResponseV2"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        first_name:
+          type: string
+          example: "Иван"
+        last_name:
+          type: string
+          example: "Петров"
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-01-02T15:30:00Z"
+      required:
+        - id
+        - email
+        - first_name
+        - last_name
+        - created_at
+
+    UserV2:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            phone:
+              type: string
+              example: "+79161234567"
+            is_active:
+              type: boolean
+              example: true
+            last_login:
+              type: string
+              format: date-time
+              nullable: true
+              example: "2023-01-05T09:15:00Z"
+
+    CreateUserRequest:
+      type: object
+      required:
+        - email
+        - first_name
+        - last_name
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        first_name:
+          type: string
+          example: "Иван"
+        last_name:
+          type: string
+          example: "Петров"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "securePassword123"
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        first_name:
+          type: string
+          example: "Иван"
+        last_name:
+          type: string
+          example: "Петров"
+        phone:
+          type: string
+          example: "+79161234567"
+
+    UserResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/User"
+
+    UserResponseV2:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/UserV2"
+
+    UsersListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 100
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+            total_pages:
+              type: integer
+              example: 5
+
+    UsersListResponseV2:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserV2"
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 100
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 50
+            total_pages:
+              type: integer
+              example: 2
+        filters:
+          type: object
+          additionalProperties: true
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Неверные данные запроса"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "email"
+              message:
+                type: string
+                example: "Неверный формат email"
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: "VALIDATION_ERROR"
+            message: "Неверные данные запроса"
+            details:
+              - field: "email"
+                message: "Неверный формат email"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: "USER_NOT_FOUND"
+            message: "Пользователь не найден"
+            details: []
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: "UNAUTHORIZED"
+            message: "Требуется авторизация"
+            details: []
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен авторизации
+
+security:
+  - BearerAuth: []

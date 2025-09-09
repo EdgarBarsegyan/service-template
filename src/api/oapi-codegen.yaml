@@ -1,0 +1,48 @@
+# Пакет для сгенерированного кода
+package: api  # поменять при необходимости [3]
+
+# Единый выходной файл (или используйте multi-file, если применяете user-templates)
+output: pkg/api/gen.go
+
+# Что генерировать: в формате map (новый стиль)
+generate:
+  models: true
+  client: true         # или chi-server / std-http-server / fiber-server и т.д. [3]
+  std-http-server: true
+  strict-server: true
+  embedded-spec: true # по желанию [3]
+
+# Опции вывода/фильтры
+output-options:
+  # Форматирование
+  skip-fmt: false                     # пропустить goimports (обычно false) [3]
+  skip-prune: true                    # НЕ вычищать неиспользуемые компоненты [3]
+
+  # Отбор по тегам/операциям (по надобности)
+  include-tags: []                    # например: ["public"] [3]
+  exclude-tags: []                    # например: ["admin"] [3]
+  include-operation-ids: []           # точечный выбор операций [2]
+  exclude-operation-ids: []           # исключение операций [2]
+
+  # Нормализация имён
+  name-normalizer: ToCamelCaseWithInitialisms  # доступные нормализаторы описаны в доке [2]
+
+  # Новые возможности v2.5.0 (опционально)
+  prefer-skip-optional-pointer: false                # глобально избегать optional pointers [6][7]
+  prefer-skip-optional-pointer-with-omitzero: false  # вместе с omitzero, требует Go 1.24+ [6][7]
+
+# Сопоставление внешних схем к импортам Go
+import-mapping:
+  # "path/or/url/to/external.yaml": "module/path/pkg"  # пример [3]
+
+# Совместимость/доп. настройки (по мере необходимости)
+compatibility:
+  # allow-unexported-struct-field-names: false       # продвинутая опция совместимости [2]
+  # preserve-original-operation-id-casing-in-embedded-spec: false  # для embedded-spec [2]
+
+# Пользовательские шаблоны (если нужно кастомизировать генерацию)
+# user-templates:
+#   files:
+#     - templates/types.tmpl
+#     - templates/client.tmpl
+#   skip-prune: false   # это относится к шаблонам, не путать с output-options [2]
