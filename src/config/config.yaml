@@ -1,5 +1,6 @@
 env: "local"
-storage_path: "./storage/sso.db"
+db:
+  url: secret
 http:
   port: 8080
 grpc:

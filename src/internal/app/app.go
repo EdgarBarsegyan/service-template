@@ -2,9 +2,7 @@ package app
 
 import (
 	"context"
-	"embed"
 	"errors"
-	"io/fs"
 	"log/slog"
 	"net"
 	"net/http"
@@ -15,28 +13,11 @@ import (
 	"service-template/internal/app/logger"
 	"service-template/internal/app/middlewares"
 	"service-template/internal/config"
+	persistenceInfrastructure "service-template/internal/persistence/infrastructure"
 	"service-template/pkg/api"
 	"syscall"
 	"time"
 )
-
-//go:embed api/swagger/*
-var swaggerUIFiles embed.FS
-
-func serveOpenAPISpec(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	d, _ := api.GetSwagger()
-	spec, _ := d.MarshalJSON()
-	w.Write(spec)
-}
-
-func getSwaggerUIFS() fs.FS {
-	subFS, err := fs.Sub(swaggerUIFiles, "api/swagger")
-	if err != nil {
-		panic(err)
-	}
-	return subFS
-}
 
 func Run() {
 	cfg := config.MustLoad()
@@ -44,10 +25,12 @@ func Run() {
 	mux := http.NewServeMux()
 
 	server := httpserver.HttpServer{}
-	serverInteface := api.NewStrictHandler(server, []api.StrictMiddlewareFunc{})
+	serverInterface := api.NewStrictHandler(server, []api.StrictMiddlewareFunc{})
 	swagger.RegisterHandlers(mux)
-	handlers := api.HandlerFromMux(serverInteface, mux)
+	handlers := api.HandlerFromMux(serverInterface, mux)
 	handlers = middlewares.Build(log, handlers)
+
+	persistenceInfrastructure.MustConfigure(cfg)
 
 	srv := &http.Server{
 		Addr:              ":8080",
@@ -93,5 +76,4 @@ func Run() {
 		_ = srv.Close()
 	}
 	log.Info("server stopped")
-
 }

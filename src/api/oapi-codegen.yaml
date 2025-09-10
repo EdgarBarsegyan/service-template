@@ -2,7 +2,7 @@
 package: api  # поменять при необходимости [3]
 
 # Единый выходной файл (или используйте multi-file, если применяете user-templates)
-output: pkg/api/gen.go
+output: src/pkg/api/gen.go
 
 # Что генерировать: в формате map (новый стиль)
 generate:
