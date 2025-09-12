@@ -17,7 +17,6 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oapi-codegen/runtime"
@@ -31,10 +30,8 @@ const (
 
 // CreateUserRequest defines model for CreateUserRequest.
 type CreateUserRequest struct {
-	Email     openapi_types.Email `json:"email"`
-	FirstName string              `json:"first_name"`
-	LastName  string              `json:"last_name"`
-	Password  string              `json:"password"`
+	Email    openapi_types.Email `json:"email"`
+	Username string              `json:"username"`
 }
 
 // Error defines model for Error.
@@ -47,22 +44,23 @@ type Error struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// PaginationInfo defines model for PaginationInfo.
+type PaginationInfo struct {
+	Limit      int `json:"limit"`
+	Page       int `json:"page"`
+	Total      int `json:"total"`
+	TotalPages int `json:"total_pages"`
+}
+
 // UpdateUserRequest defines model for UpdateUserRequest.
 type UpdateUserRequest struct {
-	Email     *openapi_types.Email `json:"email,omitempty"`
-	FirstName *string              `json:"first_name,omitempty"`
-	LastName  *string              `json:"last_name,omitempty"`
-	Phone     *string              `json:"phone,omitempty"`
+	Email openapi_types.Email `json:"email"`
 }
 
 // User defines model for User.
 type User struct {
-	CreatedAt time.Time           `json:"created_at"`
-	Email     openapi_types.Email `json:"email"`
-	FirstName string              `json:"first_name"`
-	ID        openapi_types.UUID  `json:"id"`
-	LastName  string              `json:"last_name"`
-	UpdatedAt *time.Time          `json:"updated_at,omitempty"`
+	ID       openapi_types.UUID `json:"id"`
+	Username string             `json:"username"`
 }
 
 // UserResponse defines model for UserResponse.
@@ -77,38 +75,21 @@ type UserResponseV2 struct {
 
 // UserV2 defines model for UserV2.
 type UserV2 struct {
-	CreatedAt time.Time           `json:"created_at"`
-	Email     openapi_types.Email `json:"email"`
-	FirstName string              `json:"first_name"`
-	ID        openapi_types.UUID  `json:"id"`
-	IsActive  *bool               `json:"is_active,omitempty"`
-	LastLogin *time.Time          `json:"last_login"`
-	LastName  string              `json:"last_name"`
-	Phone     *string             `json:"phone,omitempty"`
-	UpdatedAt *time.Time          `json:"updated_at,omitempty"`
+	Email    string             `json:"email"`
+	ID       openapi_types.UUID `json:"id"`
+	Username string             `json:"username"`
 }
 
 // UsersListResponse defines model for UsersListResponse.
 type UsersListResponse struct {
-	Data       *[]User `json:"data,omitempty"`
-	Pagination *struct {
-		Limit      *int `json:"limit,omitempty"`
-		Page       *int `json:"page,omitempty"`
-		Total      *int `json:"total,omitempty"`
-		TotalPages *int `json:"total_pages,omitempty"`
-	} `json:"pagination,omitempty"`
+	Data       []User         `json:"data"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 // UsersListResponseV2 defines model for UsersListResponseV2.
 type UsersListResponseV2 struct {
-	Data       *[]UserV2               `json:"data,omitempty"`
-	Filters    *map[string]interface{} `json:"filters,omitempty"`
-	Pagination *struct {
-		Limit      *int `json:"limit,omitempty"`
-		Page       *int `json:"page,omitempty"`
-		Total      *int `json:"total,omitempty"`
-		TotalPages *int `json:"total_pages,omitempty"`
-	} `json:"pagination,omitempty"`
+	Data       []UserV2       `json:"data"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 // BadRequest defines model for BadRequest.
@@ -136,12 +117,6 @@ type GetV2UsersParams struct {
 
 	// Limit Page count
 	Limit int `form:"limit" json:"limit"`
-
-	// Email Email filter
-	Email *string `form:"email,omitempty" json:"email,omitempty"`
-
-	// Active Active filter
-	Active *bool `form:"active,omitempty" json:"active,omitempty"`
 }
 
 // PostV1UsersJSONRequestBody defines body for PostV1Users for application/json ContentType.
@@ -598,38 +573,6 @@ func NewGetV2UsersRequest(server string, params *GetV2UsersParams) (*http.Reques
 					queryValues.Add(k, v2)
 				}
 			}
-		}
-
-		if params.Email != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "email", runtime.ParamLocationQuery, *params.Email); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Active != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "active", runtime.ParamLocationQuery, *params.Active); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
@@ -1350,22 +1293,6 @@ func (siw *ServerInterfaceWrapper) GetV2Users(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// ------------- Optional query parameter "email" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "email", r.URL.Query(), &params.Email)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "email", Err: err})
-		return
-	}
-
-	// ------------- Optional query parameter "active" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "active", r.URL.Query(), &params.Active)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "active", Err: err})
-		return
-	}
-
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetV2Users(w, r, params)
 	}))
@@ -1891,34 +1818,29 @@ func (sh *strictHandler) GetV2Users(w http.ResponseWriter, r *http.Request, para
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

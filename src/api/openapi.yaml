@@ -167,19 +167,6 @@ paths:
             minimum: 1
             maximum: 200
             default: 50
-        - name: email
-          in: query
-          description: Email filter
-          required: false
-          schema:
-            type: string
-        - name: active
-          in: query
-          description: Active filter
-          required: false
-          schema:
-            type: boolean
-            default: true
       responses:
         "200":
           description: Успешный запрос
@@ -199,88 +186,47 @@ components:
           type: string
           format: uuid
           example: "123e4567-e89b-12d3-a456-426614174000"
-        email:
+        username:
           type: string
-          format: email
-          example: "user@example.com"
-        first_name:
-          type: string
-          example: "Иван"
-        last_name:
-          type: string
-          example: "Петров"
-        created_at:
-          type: string
-          format: date-time
-          example: "2023-01-01T10:00:00Z"
-        updated_at:
-          type: string
-          format: date-time
-          example: "2023-01-02T15:30:00Z"
+          example: "SomeName"
       required:
         - id
-        - email
-        - first_name
-        - last_name
-        - created_at
+        - username
 
     UserV2:
       allOf:
         - $ref: "#/components/schemas/User"
         - type: object
           properties:
-            phone:
+            email:
               type: string
-              example: "+79161234567"
-            is_active:
-              type: boolean
-              example: true
-            last_login:
-              type: string
-              format: date-time
-              nullable: true
-              example: "2023-01-05T09:15:00Z"
+              example: "test@example.com"
+          required:
+            - email
 
     CreateUserRequest:
       type: object
       required:
         - email
-        - first_name
-        - last_name
-        - password
+        - username
       properties:
         email:
           type: string
           format: email
           example: "user@example.com"
-        first_name:
+        username:
           type: string
-          example: "Иван"
-        last_name:
-          type: string
-          example: "Петров"
-        password:
-          type: string
-          format: password
-          minLength: 8
-          example: "securePassword123"
+          example: "SomeName"
 
     UpdateUserRequest:
       type: object
+      required:
+        - email
       properties:
         email:
           type: string
           format: email
           example: "user@example.com"
-        first_name:
-          type: string
-          example: "Иван"
-        last_name:
-          type: string
-          example: "Петров"
-        phone:
-          type: string
-          example: "+79161234567"
 
     UserResponse:
       type: object
@@ -296,52 +242,51 @@ components:
 
     UsersListResponse:
       type: object
+      required:
+        - data
+        - pagination
       properties:
         data:
           type: array
           items:
             $ref: "#/components/schemas/User"
         pagination:
-          type: object
-          properties:
-            total:
-              type: integer
-              example: 100
-            page:
-              type: integer
-              example: 1
-            limit:
-              type: integer
-              example: 20
-            total_pages:
-              type: integer
-              example: 5
+          $ref: "#/components/schemas/PaginationInfo"
 
     UsersListResponseV2:
       type: object
+      required:
+        - data
+        - pagination
       properties:
         data:
           type: array
           items:
             $ref: "#/components/schemas/UserV2"
         pagination:
-          type: object
-          properties:
-            total:
-              type: integer
-              example: 100
-            page:
-              type: integer
-              example: 1
-            limit:
-              type: integer
-              example: 50
-            total_pages:
-              type: integer
-              example: 2
-        filters:
-          type: object
-          additionalProperties: true
+          $ref: "#/components/schemas/PaginationInfo"
+
+    PaginationInfo:
+      type: object
+      required:
+        - total
+        - page
+        - limit
+        - total_pages
+      properties:
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 50
+        total_pages:
+          type: integer
+          example: 2
+    
 
     Error:
       type: object
@@ -351,7 +296,7 @@ components:
           example: "VALIDATION_ERROR"
         message:
           type: string
-          example: "Неверные данные запроса"
+          example: "Incorrect data"
         details:
           type: array
           items:
@@ -362,7 +307,7 @@ components:
                 example: "email"
               message:
                 type: string
-                example: "Неверный формат email"
+                example: "Incorrect format of email"
 
   responses:
     BadRequest:
@@ -373,31 +318,31 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             code: "VALIDATION_ERROR"
-            message: "Неверные данные запроса"
+            message: "Incorrect request data"
             details:
               - field: "email"
-                message: "Неверный формат email"
+                message: "Incorrect email data"
 
     NotFound:
-      description: Ресурс не найден
+      description: Not found
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
           example:
             code: "USER_NOT_FOUND"
-            message: "Пользователь не найден"
+            message: "User not found"
             details: []
 
     Unauthorized:
-      description: Не авторизован
+      description: Unauthorized
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
           example:
             code: "UNAUTHORIZED"
-            message: "Требуется авторизация"
+            message: "Need to authorization"
             details: []
 
   securitySchemes:
@@ -405,7 +350,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT токен авторизации
+      description: JWT
 
 security:
   - BearerAuth: []

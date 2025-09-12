@@ -2,8 +2,9 @@
 
 ## Generation api by openapi spec
 
+- run into /src dir
 ```sh
-oapi-codegen --config=src/api/oapi-codegen.yaml src/api/openapi.yaml    
+oapi-codegen --config=api/oapi-codegen.yaml api/openapi.yaml    
 ```
 
 ## Run db into docker

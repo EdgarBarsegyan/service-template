@@ -28,6 +28,8 @@ type Db struct {
 	Url string `yaml:"url"`
 }
 
+var GlobalInstance Config
+
 func MustLoad() *Config {
 	configPath, secretConfigPath := getConfigsPath()
 	if configPath == "" {
@@ -55,6 +57,8 @@ func MustLoad() *Config {
 	if err != nil {
 		panic("Error reading env vars: " + err.Error())
 	}
+
+	GlobalInstance = cfg
 
 	return &cfg
 }
