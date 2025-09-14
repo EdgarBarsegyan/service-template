@@ -1,10 +1,17 @@
 # service-template
 
+Пример сервиса для быстрой разработки и интеграции
+
 ## Generation api by openapi spec
 
-- run into /src dir
 ```sh
+cd src/
 oapi-codegen --config=api/oapi-codegen.yaml api/openapi.yaml    
+```
+
+## Generate migration
+```sh
+migrate create -ext sql -dir src/internal/persistence/infrastructure/migrations -seq <MigrationName>
 ```
 
 ## Run db into docker

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	domainUser "service-template/internal/app/core/domain/user"
+
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 )
@@ -32,18 +34,18 @@ type UserRepository struct {
 	db *goqu.Database
 }
 
-func NewUserRepository(db *goqu.Database) *UserRepository {
+func New(db *goqu.Database) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) Create(ctx context.Context, user *UserEntity) error {
+func (r *UserRepository) Create(ctx context.Context, user *domainUser.User) error {
 	query, args, err := r.db.
 		Insert(userSchema.tableName).
 		Prepared(true).
 		Rows(goqu.Record{
-			userSchema.id:       user.Id,
-			userSchema.username: user.Username,
-			userSchema.email:    user.Email,
+			userSchema.id:       user.Id().Value(),
+			userSchema.username: user.UserName().Value(),
+			userSchema.email:    user.Email().Value(),
 		}).
 		ToSQL()
 	if err != nil {
@@ -86,14 +88,14 @@ func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *UserRepository) Update(ctx context.Context, user *UserEntity) error {
+func (r *UserRepository) Update(ctx context.Context, user *domainUser.User) error {
 	query, args, err := r.db.
 		Update(userSchema.tableName).
 		Set(goqu.Record{
-			userSchema.email: user.Email,
+			userSchema.email: user.Email().Value(),
 		}).
 		Where(
-			goqu.C(userSchema.id).Eq(user.Id),
+			goqu.C(userSchema.id).Eq(user.Id().Value()),
 		).
 		// TODO Ужас, это не дефолтная настройка оказывается, нужно подумать что с этим можно сделать
 		Prepared(true).
@@ -110,7 +112,7 @@ func (r *UserRepository) Update(ctx context.Context, user *UserEntity) error {
 	return nil
 }
 
-func (r *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (*UserEntity, error) {
+func (r *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (*domainUser.User, error) {
 	query, args, err := r.db.
 		From(userSchema.tableName).
 		Select(
@@ -126,12 +128,12 @@ func (r *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (*UserEntity
 		return nil, fmt.Errorf("can not create sql query, error %v", err)
 	}
 
-	var user UserEntity
+	var userEntity UserEntity
 	err = r.db.QueryRowContext(ctx, query, args...).
 		Scan(
-			&user.Id,
-			&user.Username,
-			&user.Email,
+			&userEntity.Id,
+			&userEntity.Username,
+			&userEntity.Email,
 		)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -140,10 +142,19 @@ func (r *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (*UserEntity
 		return nil, fmt.Errorf("failed to get user: %v", err)
 	}
 
-	return &user, nil
+	user, err := domainUser.Restore(
+		userEntity.Id,
+		userEntity.Username,
+		userEntity.Email,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
-func (r *UserRepository) GetUsers(ctx context.Context, limit int, page int) ([]UserEntity, int, error) {
+func (r *UserRepository) GetUsers(ctx context.Context, limit int, page int) ([]*domainUser.User, int, error) {
 	if limit <= 0 {
 		limit = 10
 	}
@@ -175,9 +186,9 @@ func (r *UserRepository) GetUsers(ctx context.Context, limit int, page int) ([]U
 	}
 	defer result.Close()
 
-	var users []UserEntity
+	var userEntities []*UserEntity
 	for result.Next() {
-		var user UserEntity
+		user := &UserEntity{}
 		err := result.Scan(
 			&user.Id,
 			&user.Username,
@@ -186,11 +197,16 @@ func (r *UserRepository) GetUsers(ctx context.Context, limit int, page int) ([]U
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to scan user: %v", err)
 		}
-		users = append(users, user)
+		userEntities = append(userEntities, user)
 	}
 
 	if err = result.Err(); err != nil {
 		return nil, 0, fmt.Errorf("rows error: %v", err)
+	}
+
+	users, err := mapToDomainSlice(userEntities)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	totalQuery, totalArgs, err := r.db.
@@ -209,4 +225,22 @@ func (r *UserRepository) GetUsers(ctx context.Context, limit int, page int) ([]U
 	}
 
 	return users, total, nil
+}
+
+func mapToDomainSlice(userEntitySlice []*UserEntity) ([]*domainUser.User, error) {
+	result := make([]*domainUser.User, 0, len(userEntitySlice))
+	for _, v := range userEntitySlice {
+		user, err := domainUser.Restore(
+			v.Id,
+			v.Username,
+			v.Email,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, user)
+	}
+
+	return result, nil
 }

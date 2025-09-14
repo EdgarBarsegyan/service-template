@@ -16,7 +16,7 @@ func Build() (*UserService, error) {
 	}
 
 	goquDb := goqu.New("postgres", db)
-	userRepo := userRepository.NewUserRepository(goquDb)
+	userRepo := userRepository.New(goquDb)
 	service := NewUserService(userRepo, cfg)
 
 	return service, nil

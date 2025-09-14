@@ -3,19 +3,19 @@ package user
 import (
 	"context"
 	"math"
+	"service-template/internal/app/core/domain/common"
+	domainUser "service-template/internal/app/core/domain/user"
 	"service-template/internal/config"
-	userRepository "service-template/internal/persistence/repositories/user"
 	"service-template/pkg/api"
-
-	"github.com/google/uuid"
 )
 
 type UserService struct {
-	UserRepo *userRepository.UserRepository
+	// UserRepo *userRepository.UserRepository
+	UserRepo domainUser.IRepository
 	Cfg      config.Config
 }
 
-func NewUserService(userRepo *userRepository.UserRepository, cfg config.Config) *UserService {
+func NewUserService(userRepo domainUser.IRepository, cfg config.Config) *UserService {
 	return &UserService{
 		UserRepo: userRepo,
 	}
@@ -30,8 +30,8 @@ func (service *UserService) GetUsers(ctx context.Context, request api.GetV1Users
 	var apiUsers []api.User
 	for _, v := range users {
 		apiUser := api.User{
-			ID:       v.Id,
-			Username: v.Username,
+			ID:       v.Id().Value(),
+			Username: v.UserName().Value(),
 		}
 		apiUsers = append(apiUsers, apiUser)
 	}
@@ -59,9 +59,9 @@ func (service *UserService) GetUsersV2(ctx context.Context, request api.GetV2Use
 	var apiUsers []api.UserV2
 	for _, v := range users {
 		apiUser := api.UserV2{
-			ID:       v.Id,
-			Username: v.Username,
-			Email:    v.Email,
+			ID:       v.Id().Value(),
+			Username: v.UserName().Value(),
+			Email:    v.Email().Value(),
 		}
 		apiUsers = append(apiUsers, apiUser)
 	}
@@ -81,21 +81,23 @@ func (service *UserService) GetUsersV2(ctx context.Context, request api.GetV2Use
 }
 
 func (service *UserService) CreateUser(ctx context.Context, request api.PostV1UsersRequestObject) (api.PostV1UsersResponseObject, error) {
-	user := userRepository.UserEntity{
-		Id:       uuid.New(),
-		Username: request.Body.Username,
-		Email:    string(request.Body.Email),
+	user, err := domainUser.New(
+		request.Body.Username,
+		string(request.Body.Email),
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	err := service.UserRepo.Create(ctx, &user)
+	err = service.UserRepo.Create(ctx, user)
 	if err != nil {
 		return nil, err
 	}
 
 	response := api.PostV1Users201JSONResponse{
 		Data: &api.User{
-			ID:       user.Id,
-			Username: user.Username,
+			ID:       user.Id().Value(),
+			Username: user.UserName().Value(),
 		},
 	}
 	return response, nil
@@ -117,8 +119,8 @@ func (service *UserService) GetUser(ctx context.Context, request api.GetV1UsersI
 
 	response := api.GetV1UsersID200JSONResponse{
 		Data: &api.User{
-			ID:       user.Id,
-			Username: user.Username,
+			ID:       user.Id().Value(),
+			Username: user.UserName().Value(),
 		},
 	}
 	return response, nil
@@ -130,7 +132,12 @@ func (service *UserService) UpdateUser(ctx context.Context, request api.PutV1Use
 		return nil, err
 	}
 
-	user.Email = string(request.Body.Email)
+	userEmail, err := common.NewEmail(string(request.Body.Email))
+	if err != nil {
+		return nil, err
+	}
+
+	user.SetEmail(userEmail)
 
 	err = service.UserRepo.Update(ctx, user)
 	if err != nil {
@@ -139,8 +146,8 @@ func (service *UserService) UpdateUser(ctx context.Context, request api.PutV1Use
 
 	response := api.PutV1UsersID200JSONResponse{
 		Data: &api.User{
-			ID:       user.Id,
-			Username: user.Username,
+			ID:       user.Id().Value(),
+			Username: user.UserName().Value(),
 		},
 	}
 	return response, nil
