@@ -5,7 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	domainUser "service-template/internal/app/core/domain/user"
+	domainUser "service-template/internal/domain/user"
+	"service-template/internal/persistence/repositories/base"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
@@ -31,11 +32,15 @@ type UserEntity struct {
 }
 
 type UserRepository struct {
+	*base.BaseRepository
 	db *goqu.Database
 }
 
-func New(db *goqu.Database) *UserRepository {
-	return &UserRepository{db: db}
+func New(db *goqu.Database, publisher base.EventPublisher) *UserRepository {
+	return &UserRepository{
+		BaseRepository: base.New(publisher),
+		db:             db,
+	}
 }
 
 func (r *UserRepository) Create(ctx context.Context, user *domainUser.User) error {
@@ -56,6 +61,8 @@ func (r *UserRepository) Create(ctx context.Context, user *domainUser.User) erro
 	if err != nil {
 		return fmt.Errorf("failed to create user: %v", err)
 	}
+
+	r.BaseRepository.FlashEvents(user.Aggregate)
 
 	return nil
 }
@@ -85,6 +92,8 @@ func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("can not delete user by id %s", id)
 	}
 
+	// r.BaseRepository.FlashEvents(user.Aggregate)
+
 	return nil
 }
 
@@ -108,6 +117,8 @@ func (r *UserRepository) Update(ctx context.Context, user *domainUser.User) erro
 	if err != nil {
 		return fmt.Errorf("failed to update user: %v", err)
 	}
+
+	r.BaseRepository.FlashEvents(user.Aggregate)
 
 	return nil
 }

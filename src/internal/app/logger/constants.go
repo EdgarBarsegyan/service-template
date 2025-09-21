@@ -1,6 +1,7 @@
 package logger
 
 const (
+	LoggerType         = "logger-type"
 	ServerAddr         = "server-address"
 	ErrorMessage       = "error-message"
 	HttpHeaders        = "http-headers"
@@ -11,4 +12,9 @@ const (
 	HttpStatusCode     = "http-status-code"
 	StackTrace         = "stack-trace"
 	ErrorType          = "error-type"
+)
+
+const (
+	LoggerTypeHttp             = "Http"
+	LoggerTypeEventDispatcher  = "EventDispatcher"
 )

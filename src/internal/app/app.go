@@ -10,9 +10,10 @@ import (
 	"os/signal"
 	"service-template/internal/app/api/httpserver"
 	"service-template/internal/app/api/swagger"
+	"service-template/internal/app/config"
+	"service-template/internal/app/events/publisher"
 	"service-template/internal/app/logger"
 	"service-template/internal/app/middlewares"
-	"service-template/internal/config"
 	persistenceInfrastructure "service-template/internal/persistence/infrastructure"
 	"service-template/pkg/api"
 	"syscall"
@@ -24,13 +25,14 @@ func Run() {
 	log := logger.SetupLogger(cfg.Env)
 	mux := http.NewServeMux()
 
-	server := httpserver.HttpServer{}
+	server := httpserver.New(log)
 	serverInterface := api.NewStrictHandler(server, []api.StrictMiddlewareFunc{})
 	swagger.RegisterHandlers(mux)
 	handlers := api.HandlerFromMux(serverInterface, mux)
 	handlers = middlewares.Build(log, handlers)
 
 	persistenceInfrastructure.MustConfigure(cfg)
+	publisher.Init()
 
 	srv := &http.Server{
 		Addr:              ":8080",

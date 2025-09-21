@@ -56,7 +56,7 @@ func (rm *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				slog.String(logger.HttpMethod, r.Method),
 				slog.String(logger.StackTrace, string(debug.Stack())),
 				slog.String(logger.ErrorMessage, errorInfo.message),
-				slog.String(logger.ErrorType, errorInfo.message),
+				slog.String(logger.ErrorType, errorInfo.errorType),
 			)
 
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -19,56 +19,56 @@ const (
 )
 
 // TODO нужно дату создания и модификации добавить в доменную логику
-type UserCreatedEvent struct {
+type CreatedEvent struct {
 	eventType UserEventType
 	Id        Id
 }
 
-func NewUserCreatedEvent(id Id) UserCreatedEvent {
-	return UserCreatedEvent{
+func NewCreatedEvent(id Id) CreatedEvent {
+	return CreatedEvent{
 		eventType: UserCreated,
 		Id:        id,
 	}
 }
 
-func (e UserCreatedEvent) GetEventType() string {
+func (e CreatedEvent) GetEventType() string {
 	return string(e.eventType)
 }
 
-type UserDeletedEvent struct {
+type DeletedEvent struct {
 	eventType UserEventType
 	Id        Id
 }
 
-func NewUserDeletedEvent(id Id) UserDeletedEvent {
-	return UserDeletedEvent{
+func NewDeletedEvent(id Id) DeletedEvent {
+	return DeletedEvent{
 		eventType: UserDeleted,
 		Id:        id,
 	}
 }
 
-func (e UserDeletedEvent) GetEventType() string {
+func (e DeletedEvent) GetEventType() string {
 	return string(e.eventType)
 }
 
-type UserUpdatedEvent struct {
+type UpdatedEvent struct {
 	eventType     UserEventType
 	updatedEvents []UserUpdatedEventType
 	Id            Id
 }
 
-func NewUserUpdatedEvent(id Id) *UserUpdatedEvent {
-	return &UserUpdatedEvent{
+func NewUpdatedEvent(id Id) *UpdatedEvent {
+	return &UpdatedEvent{
 		eventType:     UserUpdated,
 		updatedEvents: make([]UserUpdatedEventType, 0),
 		Id:            id,
 	}
 }
 
-func (e *UserUpdatedEvent) GetEventType() string {
+func (e *UpdatedEvent) GetEventType() string {
 	return string(e.eventType)
 }
 
-func (e *UserUpdatedEvent) AddUpdatedEventType(eventType UserUpdatedEventType) {
+func (e *UpdatedEvent) AddUpdatedEventType(eventType UserUpdatedEventType) {
 	e.updatedEvents = append(e.updatedEvents, eventType)
 }

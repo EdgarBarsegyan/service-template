@@ -3,25 +3,25 @@ package user
 import (
 	"context"
 	"math"
-	"service-template/internal/app/core/domain/common"
-	domainUser "service-template/internal/app/core/domain/user"
-	"service-template/internal/config"
+	"service-template/internal/app/config"
+	"service-template/internal/domain/common"
+	domainUser "service-template/internal/domain/user"
+	"service-template/internal/persistence/repositories/user"
 	"service-template/pkg/api"
 )
 
-type UserService struct {
-	// UserRepo *userRepository.UserRepository
-	UserRepo domainUser.IRepository
+type UserCase struct {
+	UserRepo user.Repository
 	Cfg      config.Config
 }
 
-func NewUserService(userRepo domainUser.IRepository, cfg config.Config) *UserService {
-	return &UserService{
+func NewUserCase(userRepo user.Repository, cfg config.Config) *UserCase {
+	return &UserCase{
 		UserRepo: userRepo,
 	}
 }
 
-func (service *UserService) GetUsers(ctx context.Context, request api.GetV1UsersRequestObject) (api.GetV1UsersResponseObject, error) {
+func (service *UserCase) GetUsers(ctx context.Context, request api.GetV1UsersRequestObject) (api.GetV1UsersResponseObject, error) {
 	users, total, err := service.UserRepo.GetUsers(ctx, request.Params.Limit, request.Params.Page)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (service *UserService) GetUsers(ctx context.Context, request api.GetV1Users
 	return response, nil
 }
 
-func (service *UserService) GetUsersV2(ctx context.Context, request api.GetV2UsersRequestObject) (api.GetV2UsersResponseObject, error) {
+func (service *UserCase) GetUsersV2(ctx context.Context, request api.GetV2UsersRequestObject) (api.GetV2UsersResponseObject, error) {
 	users, total, err := service.UserRepo.GetUsers(ctx, request.Params.Limit, request.Params.Page)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (service *UserService) GetUsersV2(ctx context.Context, request api.GetV2Use
 	return response, nil
 }
 
-func (service *UserService) CreateUser(ctx context.Context, request api.PostV1UsersRequestObject) (api.PostV1UsersResponseObject, error) {
+func (service *UserCase) CreateUser(ctx context.Context, request api.PostV1UsersRequestObject) (api.PostV1UsersResponseObject, error) {
 	user, err := domainUser.New(
 		request.Body.Username,
 		string(request.Body.Email),
@@ -103,7 +103,7 @@ func (service *UserService) CreateUser(ctx context.Context, request api.PostV1Us
 	return response, nil
 }
 
-func (service *UserService) DeleteUser(ctx context.Context, request api.DeleteV1UsersIDRequestObject) (api.DeleteV1UsersIDResponseObject, error) {
+func (service *UserCase) DeleteUser(ctx context.Context, request api.DeleteV1UsersIDRequestObject) (api.DeleteV1UsersIDResponseObject, error) {
 	err := service.UserRepo.Delete(ctx, request.ID)
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (service *UserService) DeleteUser(ctx context.Context, request api.DeleteV1
 	return api.DeleteV1UsersID204Response{}, nil
 }
 
-func (service *UserService) GetUser(ctx context.Context, request api.GetV1UsersIDRequestObject) (api.GetV1UsersIDResponseObject, error) {
+func (service *UserCase) GetUser(ctx context.Context, request api.GetV1UsersIDRequestObject) (api.GetV1UsersIDResponseObject, error) {
 	user, err := service.UserRepo.GetUser(ctx, request.ID)
 	if err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func (service *UserService) GetUser(ctx context.Context, request api.GetV1UsersI
 	return response, nil
 }
 
-func (service *UserService) UpdateUser(ctx context.Context, request api.PutV1UsersIDRequestObject) (api.PutV1UsersIDResponseObject, error) {
+func (service *UserCase) UpdateUser(ctx context.Context, request api.PutV1UsersIDRequestObject) (api.PutV1UsersIDResponseObject, error) {
 	user, err := service.UserRepo.GetUser(ctx, request.ID)
 	if err != nil {
 		return nil, err
@@ -153,7 +153,7 @@ func (service *UserService) UpdateUser(ctx context.Context, request api.PutV1Use
 	return response, nil
 }
 
-func (*UserService) calculateTotalPages(total int, limit int) int {
+func (*UserCase) calculateTotalPages(total int, limit int) int {
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 	return totalPages
 }

@@ -2,8 +2,8 @@ package user
 
 import (
 	"fmt"
-	"service-template/internal/app/core/domain/aggregate"
-	"service-template/internal/app/core/domain/common"
+	"service-template/internal/domain/aggregate"
+	"service-template/internal/domain/common"
 
 	"github.com/google/uuid"
 )
@@ -35,31 +35,31 @@ func New(userName string, email string) (*User, error) {
 		userName: dUseName,
 		email:    dEmail,
 	}
-	user.TryPublishEvent(NewUserCreatedEvent(user.id))
+	user.TryPublishEvent(NewCreatedEvent(user.id))
 	return user, nil
 }
 
 func Restore(id uuid.UUID, userName string, email string) (*User, error) {
 	dId, err := NewId(id)
 	if err != nil {
-		return nil, fmt.Errorf("restore error, userId: `%s`, error: %v", id, err) 
+		return nil, fmt.Errorf("restore error, userId: `%s`, error: %v", id, err)
 	}
 
 	dUserName, err := NewUserName(userName)
 	if err != nil {
-		return nil, fmt.Errorf("restore error, userId: `%s`, error: %v", dId, err) 
+		return nil, fmt.Errorf("restore error, userId: `%s`, error: %v", dId, err)
 	}
 
 	dEmail, err := common.NewEmail(email)
 	if err != nil {
-		return nil, fmt.Errorf("restore error, userId: `%s`, error: %v", dId, err) 
+		return nil, fmt.Errorf("restore error, userId: `%s`, error: %v", dId, err)
 	}
 
 	return &User{
 		Aggregate: aggregate.New(),
-		id:       dId,
-		userName: dUserName,
-		email:    dEmail,
+		id:        dId,
+		userName:  dUserName,
+		email:     dEmail,
 	}, nil
 }
 
@@ -84,10 +84,10 @@ func (u *User) SetEmail(email common.Email) common.Email {
 
 	event, ok := u.TryGetEvent(string(UserUpdated))
 	if ok {
-		updatedEvent := event.(*UserUpdatedEvent)
+		updatedEvent := event.(*UpdatedEvent)
 		updatedEvent.AddUpdatedEventType(UserEmailUpdated)
 	} else {
-		updatedEvent := NewUserUpdatedEvent(u.id)
+		updatedEvent := NewUpdatedEvent(u.id)
 		updatedEvent.AddUpdatedEventType(UserEmailUpdated)
 		u.TryPublishEvent(updatedEvent)
 	}
@@ -102,7 +102,7 @@ func (u *User) Delete() error {
 
 	u.deleted = true
 
-	ok := u.TryPublishEvent(NewUserDeletedEvent(u.id))
+	ok := u.TryPublishEvent(NewDeletedEvent(u.id))
 	if !ok {
 		return fmt.Errorf("contains user deleted event")
 	}
