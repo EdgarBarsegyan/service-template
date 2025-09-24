@@ -1,10 +1,13 @@
 package base
 
-import "service-template/internal/domain/aggregate"
+import (
+	"context"
+	"service-template/internal/domain/aggregate"
+)
 
 type EventPublisher interface {
 	PublishEvents([]aggregate.Event)
-	Flash()
+	Flash(ctx context.Context)
 }
 
 type BaseRepository struct {
@@ -17,8 +20,8 @@ func New(publisher EventPublisher) *BaseRepository {
 	}
 }
 
-func (br *BaseRepository) FlashEvents(aggregate *aggregate.Aggregate) {
+func (br *BaseRepository) FlashEvents(ctx context.Context, aggregate *aggregate.Aggregate) {
 	events := aggregate.FlashEvents()
 	br.publisher.PublishEvents(events)
-	br.publisher.Flash()
+	br.publisher.Flash(ctx)
 }

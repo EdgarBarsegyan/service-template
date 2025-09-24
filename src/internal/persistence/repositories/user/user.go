@@ -62,7 +62,7 @@ func (r *UserRepository) Create(ctx context.Context, user *domainUser.User) erro
 		return fmt.Errorf("failed to create user: %v", err)
 	}
 
-	r.BaseRepository.FlashEvents(user.Aggregate)
+	r.BaseRepository.FlashEvents(ctx, user.Aggregate)
 
 	return nil
 }
@@ -118,7 +118,7 @@ func (r *UserRepository) Update(ctx context.Context, user *domainUser.User) erro
 		return fmt.Errorf("failed to update user: %v", err)
 	}
 
-	r.BaseRepository.FlashEvents(user.Aggregate)
+	r.BaseRepository.FlashEvents(ctx, user.Aggregate)
 
 	return nil
 }

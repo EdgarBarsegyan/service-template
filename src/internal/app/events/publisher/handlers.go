@@ -1,8 +1,9 @@
 package publisher
 
 import (
+	"context"
 	"fmt"
-	userEventHandlers "service-template/internal/app/events/notifications/user"
+	userEventHandlers "service-template/internal/app/events/handlers/notifications/user"
 	"service-template/internal/domain/aggregate"
 	domainUser "service-template/internal/domain/user"
 )
@@ -22,5 +23,5 @@ func Init() {
 }
 
 type EventHandler interface {
-	Handle(event aggregate.Event) error
+	Handle(ctx context.Context, event aggregate.Event) error
 }
