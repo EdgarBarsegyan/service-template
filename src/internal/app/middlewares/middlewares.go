@@ -10,8 +10,8 @@ import (
 
 func Build(logger *slog.Logger, handler http.Handler) http.Handler {
 	builder := &Builder{}
-	builder.Use(&recovery.Middleware2{Logger: logger})
-	builder.Use(&logging.Middleware2{Logger: logger})
+	builder.Use(&recovery.Middleware{Logger: logger})
+	builder.Use(&logging.Middleware{Logger: logger})
 	builder.Use(&timeout.Middleware{})
 	return builder.Build(handler)
 }

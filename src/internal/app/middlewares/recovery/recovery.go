@@ -9,11 +9,11 @@ import (
 	"service-template/internal/app/utils"
 )
 
-type Middleware2 struct {
+type Middleware struct {
 	Logger *slog.Logger
 }
 
-func (rm *Middleware2) Handle(next http.Handler) http.Handler {
+func (rm *Middleware) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -27,7 +27,7 @@ func (rm *Middleware2) Handle(next http.Handler) http.Handler {
 					slog.String(logger.HttpMethod, r.Method),
 					slog.String(logger.StackTrace, string(debug.Stack())),
 					slog.String(logger.ErrorMessage, errorInfo.message),
-					slog.String(logger.ErrorType, errorInfo.message),
+					slog.String(logger.ErrorType, errorInfo.errorType),
 				)
 
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -36,34 +36,6 @@ func (rm *Middleware2) Handle(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-type Middleware struct {
-	logger *slog.Logger
-	next   http.Handler
-}
-
-func (rm *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if err := recover(); err != nil {
-			errorInfo := getErrorInfo(err)
-
-			rm.logger.Error(
-				"panic",
-				slog.String(logger.HttpRoute, r.RequestURI),
-				slog.String(logger.HttpParams, r.URL.RawQuery),
-				slog.String(logger.HttpHeaders, utils.GetHeaders(r.Header)),
-				slog.String(logger.HttpMethod, r.Method),
-				slog.String(logger.StackTrace, string(debug.Stack())),
-				slog.String(logger.ErrorMessage, errorInfo.message),
-				slog.String(logger.ErrorType, errorInfo.errorType),
-			)
-
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		}
-	}()
-
-	rm.next.ServeHTTP(w, r)
 }
 
 type errorInfo struct {

@@ -6,3 +6,4 @@ http:
 grpc:
   port: 44044
   timeout: 10h
+event_worker_count: 20

@@ -32,23 +32,20 @@ func Run() {
 	handlers = middlewares.Build(log, handlers)
 
 	persistenceInfrastructure.MustConfigure(cfg)
-	publisher.Init()
+	publisher.Init(cfg.EventWorkerCount, log)
 
 	srv := &http.Server{
 		Addr:              ":8080",
 		Handler:           handlers,
-		ReadTimeout:       10 * time.Second, // защита от slowloris
+		ReadTimeout:       10 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      10 * time.Second,
 		IdleTimeout:       60 * time.Second,
-		// По умолчанию HTTP/2 включён, если используется TLS. Для простоты — без TLS в примере.
 		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
-			// Можно передать данные соединения в контекст запроса
 			return ctx
 		},
 	}
 
-	// Фоновый запуск
 	errCh := make(chan error, 1)
 	go func() {
 		log.Info("server is listening", slog.String(logger.ServerAddr, srv.Addr))
@@ -58,7 +55,6 @@ func Run() {
 		close(errCh)
 	}()
 
-	// Перехват сигналов и graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 

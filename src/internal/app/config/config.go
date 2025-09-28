@@ -12,11 +12,12 @@ import (
 )
 
 type Config struct {
-	Env            string        `yaml:"env" env-default:"local"`
-	Db             Db            `yaml:"db"`
-	GRPC           GRPCConfig    `yaml:"grpc"`
-	TokenTTL       time.Duration `yaml:"token_ttl" env-default:"1h"`
-	MigrationsPath string
+	Env              string        `yaml:"env" env-default:"local"`
+	Db               Db            `yaml:"db"`
+	GRPC             GRPCConfig    `yaml:"grpc"`
+	TokenTTL         time.Duration `yaml:"token_ttl" env-default:"1h"`
+	MigrationsPath   string
+	EventWorkerCount int `yaml:"event_worker_count" env-default:"20"`
 }
 
 type GRPCConfig struct {
